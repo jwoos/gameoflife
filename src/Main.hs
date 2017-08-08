@@ -1,4 +1,4 @@
-module Main (main) where
+module Main where
 
 -- Rules
 -- Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
@@ -8,4 +8,5 @@ module Main (main) where
 
 grid x y = [[0 | y' <- [1..y]] | x' <- [1..x]]
 
-main = print $ grid 100 100
+main :: IO ()
+main = putStrLn "Hello, Haskell!"
