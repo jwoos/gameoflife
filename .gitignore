@@ -6,3 +6,4 @@
 main
 cabal.sandbox.config
 .cabal-sandbox
+dist/
