@@ -15,12 +15,6 @@ import Data.Array
 data Status = Alive | Dead deriving (Eq, Show)
 type Board = Array (Integer, Integer) Status
 
-set :: Board -> [((Integer, Integer), Status)] -> Board
-set board = (//) board
-
-get :: Board -> [((Integer, Integer), Status)] -> Board
-get board = []
-
 setStatus :: Board -> [(Integer, Integer)] -> Status -> Board
 setStatus board indices stat = board // ([(x, stat) | x <- indices])
 
@@ -53,10 +47,6 @@ getAliveNeighbors board coord = getNeighborsByStatus board coord Alive
 getDeadNeighbors :: Board -> (Integer, Integer) -> [(Integer, Integer)]
 getDeadNeighbors board coord = getNeighborsByStatus board coord Dead
 
-setUp :: (Integer, Integer) -> Board
-setUp (x, y) = array bounds [(x, Dead) | x <- range(bounds)]
-  where bounds = ((0, 0), (x - 1, y - 1))
-
 underpopulate :: Board -> [(Integer, Integer)] -> [(Integer, Integer)]
 underpopulate board alive = [coord | coord <- alive, (length $ getAliveNeighbors board coord) <= 1]
 
@@ -64,15 +54,24 @@ overpopulate :: Board -> [(Integer, Integer)] -> [(Integer, Integer)]
 overpopulate board alive = [coord | coord <- alive, (length $ getAliveNeighbors board coord) >= 4]
 
 populate :: Board -> [(Integer, Integer)] -> [(Integer, Integer)]
-populate board dead = [coord | coord <- dead, (length $ getAliveNeighbors board coord) == 2]
+populate board dead = [coord | coord <- dead, (length $ getAliveNeighbors board coord) == 3]
+
+setUp :: (Integer, Integer) -> Board
+setUp (x, y) = array bounds [(x, Dead) | x <- range(bounds)]
+  where bounds = ((0, 0), (x - 1, y - 1))
+
+initial :: Board -> [(Integer, Integer)] -> Board
+initial board coords = board // toApply
+  where toApply = [(x, Alive) | x <- coords]
 
 next :: Board -> Board
-next board = board
+next board = board // changes
   where allCoords = range (bounds board)
         alive = getAlive board
         dead = getDead board
-        willDie = underpopulate board alive : overpopulate board alive
-        willGrow = populate board dead
+        willDie = zip (underpopulate board alive ++ overpopulate board alive) (repeat Dead)
+        willGrow = zip (populate board dead) (repeat Alive)
+        changes = willDie ++ willGrow
 
 main :: IO ()
 main = putStrLn "hi"
