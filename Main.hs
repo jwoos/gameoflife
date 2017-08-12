@@ -1,4 +1,7 @@
-module Main where
+module Main (
+  main,
+  setUp
+  ) where
 
 import Data.Array
 
@@ -9,8 +12,22 @@ import Data.Array
 -- Any live cell with more than three live neighbours dies, as if by overpopulation.
 -- Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 
-grid :: (Integral a) => a -> a -> [[a]]
-grid x y = [[0 | y' <- [1..y]] | x' <- [1..x]]
+
+data Status = Alive | Dead deriving (Eq, Show)
+type Board = Array (Integer, Integer) Status
+
+setStatus :: Array (Integer, Integer) Status -> [(Integer, Integer)] -> Status -> Array (Integer, Integer) Status
+setStatus arr indices stat = arr // ([(x, stat) | x <- indices])
+
+setAlive :: Array (Integer, Integer) Status -> [(Integer, Integer)] -> Array (Integer, Integer) Status
+setAlive arr indices = setStatus arr indices Alive
+
+setDead :: Array (Integer, Integer) Status -> [(Integer, Integer)] -> Array (Integer, Integer) Status
+setDead arr indices = setStatus arr indices Dead
+
+setUp :: (Integer, Integer) -> Board
+setUp (x, y) = array bounds $ zip (range bounds) (repeat Dead)
+  where bounds = ((0, 0), (x - 1, y - 1))
 
 main :: IO ()
 main = putStrLn "hello"
