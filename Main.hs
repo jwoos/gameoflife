@@ -3,11 +3,13 @@ module Main (
   setUp
             ) where
 
+import Control.Monad
 import Data.Array
 import Data.List
 import qualified Data.Text as Text
 
 import Brick
+import Brick.BChan
 import Brick.Widgets.Border
 import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
@@ -84,11 +86,6 @@ next board = board // changes
 
 data GenerationEvent = Generation
 
-{-toString :: Board -> [Widget n]-}
-{-toString board = Text.intercalate-}
-  {-where list = [x | x <- ]-}
-    {-text = Text.pack board-}
-
 handlEvent :: Board -> BrickEvent n GenerationEvent -> EventM n (Next Board)
 handlEvent board (VtyEvent (EvKey (KChar 'q') [])) = halt board
 handlEvent board (VtyEvent (EvResize _ _)) = halt board
@@ -100,14 +97,18 @@ draw board = [withBorderStyle unicode $ border $ center (str $ intercalate "\n" 
         all = [[if val == Dead then " " else "*" | y <- [1..maxY], let val = board ! (x, y)] | x <- [1..maxX]]
         allText = [intercalate "" t | t <- all]
 
+generationThread :: BChan GenerationEvent -> IO ()
+generationThread chan = forever $ do
+    writeBChan chan Generation
+
 main :: IO Board
 main = do
   winSizeIO <- size
   let (Just winSize) = winSizeIO
       rows = height winSize
       cols = width winSize
-      initial = setUp (rows - 1, cols - 1)
-   in customMain (mkVty defaultConfig) Nothing app initial
+      startState = initial (setUp (rows - 2, cols - 2)) [(0, 1), (1, 2), (2, 0), (2, 1), (2, 2)]
+   in customMain (mkVty defaultConfig) Nothing app startState
   where app = App {
         appDraw = draw,
         appHandleEvent = handlEvent,
