@@ -57,7 +57,7 @@ executable gameoflife
   -- other-extensions:
 
   -- Other library packages from which modules are imported.
-  build-depends: base >=4.10 && <4.11, array >=0.5 && <0.6, brick, text, vty
+  build-depends: base >=4.10 && <4.11, array >=0.5 && <0.6, brick, text, vty, terminal-size
 
   -- Directories containing source files.
   -- hs-source-dirs:

@@ -12,6 +12,7 @@ import Brick.Widgets.Border
 import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
 import Graphics.Vty
+import System.Console.Terminal.Size
 
 
 -- Rules
@@ -90,31 +91,27 @@ data GenerationEvent = Generation
 
 handlEvent :: Board -> BrickEvent n GenerationEvent -> EventM n (Next Board)
 handlEvent board (VtyEvent (EvKey (KChar 'q') [])) = halt board
+handlEvent board (VtyEvent (EvResize _ _)) = halt board
 handlEvent board _ = continue (next board)
 
 draw :: Board -> [Widget ()]
 draw board = [withBorderStyle unicode $ border $ center (str $ intercalate "\n" allText)]
   where (_, (maxX, maxY)) = bounds board
-        all = [[if val == Dead then "0" else "1" | y <- [1..maxY], let val = board ! (x, y)] | x <- [1..maxX]]
+        all = [[if val == Dead then " " else "*" | y <- [1..maxY], let val = board ! (x, y)] | x <- [1..maxX]]
         allText = [intercalate "" t | t <- all]
-
-quitNoResize :: Board -> BrickEvent n e -> EventM n (Next Board)
-quitNoResize board (VtyEvent (EvResize _ _)) = continue board
-quitNoResize board _ = halt board
-
-ui :: Widget ()
-ui = withBorderStyle unicode $
-  border $
-    center (str "Hello world")
 
 main :: IO Board
 main = do
-  customMain (mkVty defaultConfig) Nothing app initial
-    where app = App {
-        appDraw = const [ui],
+  winSizeIO <- size
+  let (Just winSize) = winSizeIO
+      rows = height winSize
+      cols = width winSize
+      initial = setUp (rows - 1, cols - 1)
+   in customMain (mkVty defaultConfig) Nothing app initial
+  where app = App {
+        appDraw = draw,
         appHandleEvent = handlEvent,
         appStartEvent = return,
         appAttrMap = const $ attrMap defAttr [],
         appChooseCursor = neverShowCursor
-                    }
-          initial = setUp (25, 25)
+                  }
