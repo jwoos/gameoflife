@@ -1,9 +1,17 @@
 module Main (
   main,
   setUp
-  ) where
+            ) where
 
 import Data.Array
+import Data.List
+import qualified Data.Text as Text
+
+import Brick
+import Brick.Widgets.Border
+import Brick.Widgets.Border.Style
+import Brick.Widgets.Center
+import Graphics.Vty
 
 
 -- Rules
@@ -57,7 +65,7 @@ populate :: Board -> [(Integer, Integer)] -> [(Integer, Integer)]
 populate board dead = [coord | coord <- dead, (length $ getAliveNeighbors board coord) == 3]
 
 setUp :: (Integer, Integer) -> Board
-setUp (x, y) = array bounds [(x, Dead) | x <- range(bounds)]
+setUp (x, y) = array bounds [(c, Dead) | c <- range(bounds)]
   where bounds = ((0, 0), (x - 1, y - 1))
 
 initial :: Board -> [(Integer, Integer)] -> Board
@@ -73,5 +81,40 @@ next board = board // changes
         willGrow = zip (populate board dead) (repeat Alive)
         changes = willDie ++ willGrow
 
-main :: IO ()
-main = putStrLn "hi"
+data GenerationEvent = Generation
+
+{-toString :: Board -> [Widget n]-}
+{-toString board = Text.intercalate-}
+  {-where list = [x | x <- ]-}
+    {-text = Text.pack board-}
+
+handlEvent :: Board -> BrickEvent n GenerationEvent -> EventM n (Next Board)
+handlEvent board (VtyEvent (EvKey (KChar 'q') [])) = halt board
+handlEvent board _ = continue (next board)
+
+draw :: Board -> [Widget ()]
+draw board = [withBorderStyle unicode $ border $ center (str $ intercalate "\n" allText)]
+  where (_, (maxX, maxY)) = bounds board
+        all = [[if val == Dead then "0" else "1" | y <- [1..maxY], let val = board ! (x, y)] | x <- [1..maxX]]
+        allText = [intercalate "" t | t <- all]
+
+quitNoResize :: Board -> BrickEvent n e -> EventM n (Next Board)
+quitNoResize board (VtyEvent (EvResize _ _)) = continue board
+quitNoResize board _ = halt board
+
+ui :: Widget ()
+ui = withBorderStyle unicode $
+  border $
+    center (str "Hello world")
+
+main :: IO Board
+main = do
+  customMain (mkVty defaultConfig) Nothing app initial
+    where app = App {
+        appDraw = const [ui],
+        appHandleEvent = handlEvent,
+        appStartEvent = return,
+        appAttrMap = const $ attrMap defAttr [],
+        appChooseCursor = neverShowCursor
+                    }
+          initial = setUp (25, 25)
