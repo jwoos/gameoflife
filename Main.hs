@@ -7,6 +7,7 @@ import Control.Monad
 import Data.Array
 import Data.List
 import qualified Data.Text as Text
+import System.Environment
 
 import Brick
 import Brick.BChan
@@ -68,7 +69,7 @@ populate :: Board -> [(Integer, Integer)] -> [(Integer, Integer)]
 populate board dead = [coord | coord <- dead, (length $ getAliveNeighbors board coord) == 3]
 
 setUp :: (Integer, Integer) -> Board
-setUp (x, y) = array bounds [(c, Dead) | c <- range(bounds)]
+setUp (x, y) = array bounds [(c, Dead) | c <- range bounds]
   where bounds = ((0, 0), (x - 1, y - 1))
 
 initial :: Board -> [(Integer, Integer)] -> Board
@@ -93,8 +94,9 @@ handlEvent board _ = continue (next board)
 
 draw :: Board -> [Widget ()]
 draw board = [withBorderStyle unicode $ border $ center (str $ intercalate "\n" allText)]
+{-draw board = [centerWith (Just '|') $ (str $ intercalate "\n" allText)]-}
   where (_, (maxX, maxY)) = bounds board
-        all = [[if val == Dead then " " else "*" | y <- [1..maxY], let val = board ! (x, y)] | x <- [1..maxX]]
+        all = [[if val == Dead then " " else "■" | y <- [0..maxY], let val = board ! (x, y)] | x <- [0..maxX]]
         allText = [intercalate "" t | t <- all]
 
 generationThread :: BChan GenerationEvent -> IO ()
@@ -104,10 +106,12 @@ generationThread chan = forever $ do
 main :: IO Board
 main = do
   winSizeIO <- size
+  args <- getArgs
   let (Just winSize) = winSizeIO
       rows = height winSize
       cols = width winSize
-      startState = initial (setUp (rows - 2, cols - 2)) [(0, 1), (1, 2), (2, 0), (2, 1), (2, 2)]
+      config = if null args then [(0, 1), (1, 2), (2, 0), (2, 1), (2, 2)] else [(read $ Text.unpack x, read $ Text.unpack y) | coord <- args, let lst = Text.splitOn (Text.pack ",") (Text.pack coord), let x = head lst, let y = last lst]
+      startState = initial (setUp (rows, cols)) config
    in customMain (mkVty defaultConfig) Nothing app startState
   where app = App {
         appDraw = draw,
