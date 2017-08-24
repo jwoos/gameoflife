@@ -1,7 +1,7 @@
 # Conway's Game of Life
 
 ### Build
-Clone the repository and run `cabal install --dependencies-only`.
+Clone the repository and `cd` into it. It's recommended that you run `cabal sandbox init` so that it uses a sandbox local to this project's directory and doesn't mess with other libraries. Run `cabal install --dependencies-only` to install the dependencies.
 
 Then run `cabal run` to run with default initial state. To run with custom initial state, run `cabal build` and then run `./dist/build/gameoflife <args>` where `args` is a list of list of coordinates that should be alive in the form of `x,y`.
 
