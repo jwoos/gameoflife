@@ -1,6 +1,17 @@
 # Conway's Game of Life
 
 ### Build
+#### Recommended (Stack)
+Clone the repository and `cd` into it. Run `stack install` and then `stack build`.
+
+Then run `stack exec gameoflife` to run with default initial state. To run with custom initial state run `stack exec gameoflife <args>` where `args` is a list of list of coordinates that should be alive in the form of `x,y`.
+
+For example:
+```
+stack exec gameoflife 0,1 1,2 2,0 2,1 2,2
+```
+
+#### Deprecated (Cabal)
 Clone the repository and `cd` into it. It's recommended that you run `cabal sandbox init` so that it uses a sandbox local to this project's directory and doesn't mess with other libraries. Run `cabal install --dependencies-only` to install the dependencies.
 
 Then run `cabal run` to run with default initial state. To run with custom initial state, run `cabal build` and then run `./dist/build/gameoflife <args>` where `args` is a list of list of coordinates that should be alive in the form of `x,y`.
